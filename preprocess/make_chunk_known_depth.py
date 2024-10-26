@@ -17,6 +17,7 @@ import os
 import random
 from read_write_model import *
 import json
+import trimesh
 
 def get_nb_pts(image_metas):
     n_pts = 0
@@ -40,6 +41,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_path', required=True)
     parser.add_argument('--add_far_cams', default=True)
     parser.add_argument('--model_type', default="bin")
+    parser.add_argument('--pc_path', default="/data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city_pointcloud/point_cloud_ds20/aerial/Block_A.ply")
 
     args = parser.parse_args()
 
@@ -75,8 +77,6 @@ if __name__ == '__main__':
     indices = np.zeros([n_pts], np.int64)
     n_images = np.zeros([n_pts], np.int64)
     colors = np.zeros([n_pts, 3], np.float32)
-    indices_2d = [] #np.zeros([n_pts], np.int64)
-    image_ids = [] #np.zeros([n_pts], np.int64)
 
     idx = 0    
     # parse the points3d to get the xyzs, indices, errors, colors, n_images
@@ -84,17 +84,12 @@ if __name__ == '__main__':
     # map all information to each list
     for key in points3d:
 
-        # print("points3d[key].point2D_idxs",type(points3d[key].point2D_idxs), np.shape(points3d[key].point2D_idxs))
         # different points data properties
         xyzs[idx] = points3d[key].xyz # 3d world points
         indices[idx] = points3d[key].id # 
         errors[idx] = points3d[key].error
         colors[idx] = points3d[key].rgb
         n_images[idx] = len(points3d[key].image_ids)
-        # indices_2d[idx] = points3d[key].point2D_idxs
-        indices_2d.append(points3d[key].point2D_idxs)
-        # image_ids[idx] = points3d[key].image_ids
-        image_ids.append(points3d[key].image_ids)
         idx +=1
     # id do not matter, a lot of sparse exist
 
@@ -105,13 +100,6 @@ if __name__ == '__main__':
 
     # mask *= n_images > 3
     xyzsC, colorsC, errorsC, indicesC, n_imagesC = xyzs[mask], colors[mask], errors[mask], indices[mask], n_images[mask]
-    # indices_2dC, image_idsC = indices_2d[mask], image_ids[mask]
-    indices_2dC = []
-    image_idsC = []
-    for indices_i, image_id_i, keep in zip(indices_2d, image_ids, mask):
-        if keep:
-            indices_2dC.append(indices_i)
-            image_idsC.append(image_id_i)
 
     # indicesC.max, the length of number of points
     points3d_ordered = np.zeros([indicesC.max()+1, 3])
@@ -145,6 +133,14 @@ if __name__ == '__main__':
 
     global_bbox[0, 2] = -1e12
     global_bbox[1, 2] = 1e12
+
+    # load pointcloud
+    mesh = trimesh.load(args.pc_path)
+    global_xyzs = mesh.vertices
+    global_colors = mesh.visual.vertex_colors
+
+
+
 
     def get_var_of_laplacian(key):
         image = cv2.imread(os.path.join(args.images_dir, images_metas[key].name))
@@ -189,19 +185,6 @@ if __name__ == '__main__':
         new_colors = colorsC[mask]
         new_indices = indicesC[mask]
         new_errors = errorsC[mask]
-        new_images = n_imagesC[mask]
-
-        # list do not support mask, we do it with 
-        # new_indices_2d = indices_2dC[mask]
-        # new_image_ids = image_idsC[mask]
-        new_indices_2d = []
-        new_image_ids = []
-        for indices_i, image_id_i, keep in zip(indices_2dC, image_idsC, mask):
-            if keep:
-                new_indices_2d.append(indices_i)
-                new_image_ids.append(image_id_i)
-
-        # print("Number of points in chunk: ", len(new_xyzs), len(new_indices_2d), len(new_image_ids)) 
 
         new_colors = np.clip(new_colors, 0, 255).astype(np.uint8)
 
@@ -213,7 +196,8 @@ if __name__ == '__main__':
         extended_corner_min = box_center - acceptable_radius * extent
         extended_corner_max = box_center + acceptable_radius * extent
 
-        print("corner pos", corner_max_for_pts, corner_min_for_pts, corner_max, corner_min)
+        print("extended_corner_min", extended_corner_min)
+        print("extended_corner_max", extended_corner_max)
 
         for cam_idx, key in enumerate(images_metas):
             # if not valid_cam[cam_idx]:
@@ -234,9 +218,8 @@ if __name__ == '__main__':
             # All distances
             if (not valid_cam[cam_idx]) and n_pts > 10 and args.add_far_cams:
                 valid_cam[cam_idx] = random.uniform(0, 0.5) < (float(n_pts) / len(image_points3d))
-                # print("get valid cam in all area", n_pts)
             
-        print(f"{valid_cam.sum()} valid cameras after visibility-base selection")
+        # print(f"{valid_cam.sum()} valid cameras after visibility-base selection")
         if args.lapla_thresh > 0:
             chunk_laplacians = np.array([laplacians_dict[key] for cam_idx, key in enumerate(images_metas) if valid_cam[cam_idx]])
             laplacian_mean = chunk_laplacians.mean()
@@ -279,31 +262,23 @@ if __name__ == '__main__':
                     tvec = image_meta.tvec,
                     camera_id = image_meta.camera_id,
                     name = image_meta.name,
-                    xys = image_meta.xys,
-                    point3D_ids = image_meta.point3D_ids
-                    # xys = [],
-                    # point3D_ids = []
+                    xys = [],
+                    point3D_ids = []
                 )
-                # here it create image file with no 3d points
 
                 if os.path.exists(test_file) and image_meta.name in blending_dict:
                     n_pts = np.isin(image_meta.point3D_ids, new_indices).sum()
                     blending_dict[image_meta.name][f"{i}_{j}"] = str(n_pts)
 
-            # sanity check
-            # print("new_image_ids[idx]", new_image_ids[idx].shape)
+
             points_out = {
                 new_indices[idx] : Point3D(
                         id=new_indices[idx],
                         xyz= new_xyzs[idx],
                         rgb=new_colors[idx],
                         error=new_errors[idx],
-                        image_ids=new_image_ids[idx],
-                        point2D_idxs=new_indices_2d[idx]
-
-                        # image_ids=new_imagesC[idx],
-                        # image_ids=np.array([]),
-                        # point2D_idxs=np.array([])
+                        image_ids=np.array([]),
+                        point2D_idxs=np.array([])
                     )
                 for idx in range(len(new_xyzs))
             }

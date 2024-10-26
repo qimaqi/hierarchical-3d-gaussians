@@ -102,8 +102,18 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, depths_params, images_fold
             focal_length_y = intr.params[1]
             FovY = focal2fov(focal_length_y, height)
             FovX = focal2fov(focal_length_x, width)
+        elif intr.model=="SIMPLE_RADIAL":
+            # print("intr.model",intr.params, len(intr.params))
+            focal_length_x = intr.params[0]
+            focal_length_y = focal_length_x
+            primx = float(intr.params[1]) / width
+            primy = float(intr.params[2]) / height
+            FovY = focal2fov(focal_length_y, height)
+            FovX = focal2fov(focal_length_x, width)
+
         else:
-            assert False, "Colmap camera model not handled: only undistorted datasets (PINHOLE or SIMPLE_PINHOLE cameras) supported!"
+            print("intr.model",intr.model)
+            assert False, f"Colmap camera model {intr.model} not handled: only undistorted datasets (PINHOLE or SIMPLE_PINHOLE cameras) supported!"
 
         n_remove = len(extr.name.split('.')[-1]) + 1
         depth_params = None
@@ -189,6 +199,7 @@ def readColmapSceneInfo(path, images, masks, depths, eval, train_test_exp, llffh
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
+    # print("cam_intrinsics", cam_intrinsics)
     depth_params_file = os.path.join(path, "sparse/0", "depth_params.json")
     ## if depth_params_file isnt there AND depths file is here -> throw error
     depths_params = None

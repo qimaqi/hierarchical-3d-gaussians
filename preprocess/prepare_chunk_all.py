@@ -16,12 +16,21 @@ import time, platform
 from read_write_model import write_points3D_binary
 
 if __name__ == '__main__':
+    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--raw_chunk', type=str, help='Input raw chunk', required=True)
-    parser.add_argument('--out_chunk', type=str, help='Output chunk', required=True)
+    parser.add_argument('--chunks_dir', type=str, help='Input raw chunk', required=True)
+    # parser.add_argument('--out_chunk', type=str, help='Output chunk', required=True)
     parser.add_argument('--images_dir', type=str, help='Images directory', required=True)
     parser.add_argument('--skip_bundle_adjustment', action="store_true", default=False)
     args = parser.parse_args()
+    chunks_dir = args.chunks_dir
+    chunk_names = os.listdir(os.path.join(chunks_dir, "raw_chunks"))
+    for chunk_name in chunk_names:
+        in_dir = os.path.join(chunks_dir, "raw_chunks", chunk_name)
+        out_dir = os.path.join(chunks_dir, "chunks", chunk_name)
+
+    args.raw_chunk = in_dir
+    args.out_chunk = out_dir
 
     matching_nb = 50 if args.skip_bundle_adjustment else 200
     colmap_exe = "colmap.bat" if platform.system() == "Windows" else "colmap"
@@ -56,7 +65,7 @@ if __name__ == '__main__':
     
     shutil.copy(os.path.join(args.raw_chunk, "sparse", "0", f"matching_{matching_nb}.txt"), os.path.join(bundle_adj_chunk, f"matching_{matching_nb}.txt"))
 
-    ## Extracting the subset of images corresponding to that chunk
+    # Extracting the subset of images corresponding to that chunk
     print(f"undistorting to chunk {bundle_adj_chunk}...")
     colmap_image_undistorter_args = [
         colmap_exe, "image_undistorter",
@@ -71,37 +80,31 @@ if __name__ == '__main__':
         print(f"Error executing image_undistorter: {e}")
         sys.exit(1)
 
+    print("extracting features...")
+    colmap_feature_extractor_args = [
+        colmap_exe, "feature_extractor",
+        "--database_path", f"{bundle_adj_chunk}/database.db",
+        "--image_path", f"{bundle_adj_chunk}/images",
+        "--ImageReader.existing_camera_id", "1",
+        ]
+    
+    try:
+        subprocess.run(colmap_feature_extractor_args, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing colmap feature_extractor: {e}")
+        sys.exit(1)
 
-    if args.skip_bundle_adjustment:
-        pass
-    else:
-        print("extracting features...")
-        colmap_feature_extractor_args = [
-            colmap_exe, "feature_extractor",
-            "--database_path", f"{bundle_adj_chunk}/database.db",
-            "--image_path", f"{bundle_adj_chunk}/images",
-            "--ImageReader.existing_camera_id", "1",
-            "--SiftExtraction.use_gpu", "0",
-            ]
-        
-        try:
-            subprocess.run(colmap_feature_extractor_args, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing colmap feature_extractor: {e}")
-            sys.exit(1)
-
-        print("feature matching...")
-        colmap_matches_importer_args = [
-            colmap_exe, "matches_importer",
-            "--database_path", f"{bundle_adj_chunk}/database.db",
-            "--match_list_path", f"{bundle_adj_chunk}/matching_{matching_nb}.txt",
-            "--SiftMatching.use_gpu", "0",
-            ]
-        try:
-            subprocess.run(colmap_matches_importer_args, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing colmap matches_importer: {e}")
-            sys.exit(1)
+    print("feature matching...")
+    colmap_matches_importer_args = [
+        colmap_exe, "matches_importer",
+        "--database_path", f"{bundle_adj_chunk}/database.db",
+        "--match_list_path", f"{bundle_adj_chunk}/matching_{matching_nb}.txt"
+        ]
+    try:
+        subprocess.run(colmap_matches_importer_args, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing colmap matches_importer: {e}")
+        sys.exit(1)
 
     os.makedirs(os.path.join(bundle_adj_chunk, "sparse", "o"))
     os.makedirs(os.path.join(bundle_adj_chunk, "sparse", "t"))
@@ -111,27 +114,19 @@ if __name__ == '__main__':
     
     shutil.copy(os.path.join(args.raw_chunk, "sparse", "0", "images.bin"), os.path.join(bundle_adj_chunk, "sparse", "o", "images.bin"))
     shutil.copy(os.path.join(args.raw_chunk, "sparse", "0", "cameras.bin"), os.path.join(bundle_adj_chunk, "sparse", "o", "cameras.bin"))
-    shutil.copy(os.path.join(args.raw_chunk, "sparse", "0", "points3D.bin"), os.path.join(bundle_adj_chunk, "sparse", "o", "points3D.bin"))
-
+    
     # points3D.bin shouldnt be completely empty (must have 1 BYTE)
-    # write_points3D_binary({}, os.path.join(bundle_adj_chunk, "sparse", "o", "points3D.bin")) 
+    write_points3D_binary({}, os.path.join(bundle_adj_chunk, "sparse", "o", "points3D.bin")) 
 
     if args.skip_bundle_adjustment:
-        # instead of get points from old, it rerun the triangulation
-        # subprocess.run([colmap_exe, "point_triangulator",
-        #     "--Mapper.ba_global_max_num_iterations", "5",
-        #     "--Mapper.ba_global_max_refinements", "1", 
-        #     "--database_path", f"{bundle_adj_chunk}/database.db",
-        #     "--image_path", f"{bundle_adj_chunk}/images",
-        #     "--input_path", f"{bundle_adj_chunk}/sparse/o",
-        #     "--output_path", f"{bundle_adj_chunk}/sparse/0",
-        #     "--SiftExtraction.use_gpu", "0",
-        #     ], check=True)
-        # just copy bundle_adj_chunk}/sparse/o to bundle_adj_chunk}/sparse/0
-        # shutil.copytree(os.path.join(bundle_adj_chunk, "sparse", "o"), os.path.join(bundle_adj_chunk, "sparse", "0"))
-        shutil.copy(os.path.join(bundle_adj_chunk, "sparse", "o", "cameras.bin"), os.path.join(bundle_adj_chunk, "sparse", "0", "cameras.bin"))
-        shutil.copy(os.path.join(bundle_adj_chunk, "sparse", "o", "images.bin"), os.path.join(bundle_adj_chunk, "sparse", "0", "images.bin"))
-        shutil.copy(os.path.join(bundle_adj_chunk, "sparse", "o", "points3D.bin"), os.path.join(bundle_adj_chunk, "sparse", "0", "points3D.bin"))
+        subprocess.run([colmap_exe, "point_triangulator",
+            "--Mapper.ba_global_max_num_iterations", "5",
+            "--Mapper.ba_global_max_refinements", "1", 
+            "--database_path", f"{bundle_adj_chunk}/database.db",
+            "--image_path", f"{bundle_adj_chunk}/images",
+            "--input_path", f"{bundle_adj_chunk}/sparse/o",
+            "--output_path", f"{bundle_adj_chunk}/sparse/0",
+            ], check=True)
     else:
         colmap_point_triangulator_args = [
             colmap_exe, "point_triangulator",
@@ -193,8 +188,7 @@ if __name__ == '__main__':
         "python", "preprocess/transform_colmap.py",
         "--in_dir", args.raw_chunk,
         "--new_colmap_dir", bundle_adj_chunk,
-        "--out_dir", args.out_chunk,
-        "--skip_bundle_adjustment" if args.skip_bundle_adjustment else ""
+        "--out_dir", args.out_chunk
     ]
 
     ## Correct slight shifts that might have happened during bundle adjustments

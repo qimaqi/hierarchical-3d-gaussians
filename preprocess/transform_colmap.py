@@ -58,11 +58,15 @@ if __name__ == '__main__':
     parser.add_argument('--in_dir', required=True)
     parser.add_argument('--new_colmap_dir', required=True)
     parser.add_argument('--out_dir', required=True)
+    parser.add_argument('--skip_bundle_adjustment', action="store_true", default=False)
     args = parser.parse_args()
 
     old_images_metas = read_images_binary(f"{args.in_dir}/sparse/0/images.bin")
     new_images_metas = read_images_binary(f"{args.new_colmap_dir}/sparse/0/images.bin")
     n_pts = get_nb_pts(new_images_metas)
+    n_pts_old = get_nb_pts(old_images_metas)
+    print("n_ptsin prepare chunk", n_pts)
+    print("n_pts_old in prepare chunk", n_pts_old)
     
     old_keys = old_images_metas.keys()
     old_keys_dict = {old_images_metas[key].name: key for key in old_keys}
@@ -91,6 +95,7 @@ if __name__ == '__main__':
     sim3 = procrustes_analysis(old_cam_centers_torch_trimmed, new_cam_centers_torch_trimmed)
     center_aligned = (new_cam_centers_torch-sim3.t1)/sim3.s1@sim3.R.t()*sim3.s0+sim3.t0
     points3d = read_points3D_binary(f"{args.new_colmap_dir}/sparse/0/points3D.bin")
+    print("points3d", len(points3d))
 
     xyzs = np.zeros([n_pts, 3], np.float32)
     errors = np.zeros([n_pts], np.float32) + 9e9

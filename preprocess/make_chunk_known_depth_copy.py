@@ -40,6 +40,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_path', required=True)
     parser.add_argument('--add_far_cams', default=True)
     parser.add_argument('--model_type', default="bin")
+    parser.add_argument('--depth_dir')
 
     args = parser.parse_args()
 
@@ -54,18 +55,34 @@ if __name__ == '__main__':
 
     # data basic info
     print("images_metas keys", len(images_metas.keys())) 
-    print("points3d keys", len(points3d.keys())) # 47936)
-    key_list = list(points3d.keys())
-    key_list = np.array(key_list).astype(np.int64)
-    print(" np.min(points3d.keys()), np.max(points3d.keys())",  np.min(key_list), np.max(key_list))
-    # images_metas keys 402
-    # points3d keys 47936
-    # pts_idx might not be continuous 
+    print("points3d keys", len(points3d.keys()))
+
 
     cam_centers = np.array([
         -qvec2rotmat(images_metas[key].qvec).astype(np.float32).T @ images_metas[key].tvec.astype(np.float32)
-        for key in images_metas
-    ])
+        for key in images_metas])
+
+    qvec_w2c = [(images_metas[key].qvec).astype(np.float32) for key in images_metas]
+    tvec_w2c = [(images_metas[key].tvec).astype(np.float32) for key in images_metas]
+    qvec_w2c = np.array(qvec_w2c)
+    tvec_w2c = np.array(tvec_w2c)
+    print("cam_centers", cam_centers.shape) # (100, 3)
+    # print("qvec_w2c", qvec_w2c.shape) # (100, 4)
+    # print("tvec_w2c", tvec_w2c.shape) # (100, 3)
+    # [w x y z ] to [x y z w]
+    qvec_w2c = qvec_w2c[:, [1, 2, 3, 0]]
+    from scipy.spatial.transform import Rotation
+    rotmat_w2c = Rotation.from_quat(qvec_w2c).as_matrix()
+    # print("rotmat_w2c", rotmat_w2c.shape) # (100, 3, 3)
+    
+
+    # save cam centers to ply file for visualization
+    # import trimesh
+    # mesh = trimesh.Trimesh(vertices=cam_centers)
+    # mesh.export('./cam_centers.ply')
+
+    # get 4x4 pose from qvec and tvec
+
 
     n_pts = get_nb_pts(images_metas)
     print("Number of points: ", n_pts) #
@@ -75,64 +92,117 @@ if __name__ == '__main__':
     indices = np.zeros([n_pts], np.int64)
     n_images = np.zeros([n_pts], np.int64)
     colors = np.zeros([n_pts, 3], np.float32)
-    indices_2d = [] #np.zeros([n_pts], np.int64)
-    image_ids = [] #np.zeros([n_pts], np.int64)
 
     idx = 0    
     # parse the points3d to get the xyzs, indices, errors, colors, n_images
     # each points3d have a key name
     # map all information to each list
     for key in points3d:
-
-        # print("points3d[key].point2D_idxs",type(points3d[key].point2D_idxs), np.shape(points3d[key].point2D_idxs))
         # different points data properties
         xyzs[idx] = points3d[key].xyz # 3d world points
         indices[idx] = points3d[key].id # 
         errors[idx] = points3d[key].error
         colors[idx] = points3d[key].rgb
         n_images[idx] = len(points3d[key].image_ids)
-        # indices_2d[idx] = points3d[key].point2D_idxs
-        indices_2d.append(points3d[key].point2D_idxs)
-        # image_ids[idx] = points3d[key].image_ids
-        image_ids.append(points3d[key].image_ids)
         idx +=1
     # id do not matter, a lot of sparse exist
 
     mask = errors < 1e1
     print(f"Number of points with error < 1e1: {mask.sum()}") # 47936
     # how to add more points here
-    # 67639 74413
 
     # mask *= n_images > 3
-    xyzsC, colorsC, errorsC, indicesC, n_imagesC = xyzs[mask], colors[mask], errors[mask], indices[mask], n_images[mask]
-    # indices_2dC, image_idsC = indices_2d[mask], image_ids[mask]
-    indices_2dC = []
-    image_idsC = []
-    for indices_i, image_id_i, keep in zip(indices_2d, image_ids, mask):
-        if keep:
-            indices_2dC.append(indices_i)
-            image_idsC.append(image_id_i)
+    # xyzsC, colorsC, errorsC, indicesC, n_imagesC = xyzs[mask], colors[mask], errors[mask], indices[mask], n_images[mask]
+
+    # save xyzs to ply file for visualization
+    # import trimesh 
+    # mesh = trimesh.Trimesh(vertices=xyzsC, vertex_colors=colorsC)
+    # mesh.export('points_colmap.ply')
 
     # indicesC.max, the length of number of points
-    points3d_ordered = np.zeros([indicesC.max()+1, 3])
-    points3d_ordered[indicesC] = xyzsC # reoreder is masked out which have less errors
+    # points3d_ordered = np.zeros([indicesC.max()+1, 3])
+    # points3d_ordered[indicesC] = xyzsC # reoreder is masked out which have less errors
     images_points3d = {}
+
+    '''
+    main function to modify the images_metas
+    '''
     # this operation give every image key its 3d points we can replace with depth map 
 
-    for key in images_metas:
-        pts_idx = images_metas[key].point3D_ids 
-        mask = pts_idx >= 0 #
-        mask *= pts_idx < len(points3d_ordered)
-        pts_idx = pts_idx[mask]
-        if len(pts_idx) > 0:
-            image_points3d = points3d_ordered[pts_idx]
-            mask = (np.abs(image_points3d) != 0).sum(axis=-1) # why only choose > 0 part
-            # images_metas[key]["points3d"] = image_points3d[mask>0]
-            # each images, add the 3d world points
-            images_points3d[key] = image_points3d[mask>0]
+    def load_world_points_for_frame(depth_map_path, rot_w2c, t_w2c, intrinscs, type='aerial'):
+        os.environ["OPENCV_IO_ENABLE_OPENEXR"]="1"
+        # TODO aerial intrinsic differnet from street
+        if 'aerial' in depth_map_path:
+            intrinsics =  np.array([[2317.6449482429634/4, 0, 960.0/4],
+                                    [0, 2317.6449482429634/4, 540.0/4],
+                                    [0, 0, 1]])
+        elif 'street' in depth_map_path:
+            intrinsics = np.array([[500., 0, 500.0],
+                                    [0, 500., 500.0],
+                                    [0, 0, 1]])
         else:
-            # images_metas[key]["points3d"] = np.array([])
-            images_points3d[key] = np.array([])
+            raise ValueError("Unknown type")
+
+        depth_map = cv2.imread(depth_map_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+
+        H,W, _  = depth_map.shape
+        depth_map = depth_map[...,0]
+        # using cv2 nearest interpoate to resize the depth map
+        if 'aerial' in depth_map_path:
+            depth_map = cv2.resize(depth_map, (W//4,H//4), interpolation=cv2.INTER_NEAREST)
+
+        w2c_pose = np.eye(4)
+        w2c_pose[:3, :3] = rot_w2c
+        w2c_pose[:3, 3] = t_w2c
+
+        c2w_pose = np.linalg.inv(w2c_pose)
+        c2w_pose = c2w_pose[:3,:4]
+
+        # 1. get the pixel coordinate
+        H,W = depth_map.shape
+        x = np.arange(W)
+        y = np.arange(H)
+        xx,yy = np.meshgrid(x,y)
+        xx = xx.flatten()
+        yy = yy.flatten()
+
+        # 2. get the depth value
+        depths = depth_map.flatten()
+
+        points = np.vstack([xx,yy,np.ones_like(xx)])
+        # 3xN
+        points = np.multiply(points, depths)
+        # 3xN
+        points = np.dot(np.linalg.inv(intrinsics), points)
+        # 3xN
+        points = np.dot(c2w_pose, np.vstack([points, np.ones_like(xx)]))
+        # 3xN
+        points = points[:3,:]
+        # Nx3
+        points = points.T
+        # print(points.shape)
+        return points
+
+    for count, key in enumerate(images_metas):
+        depth_name = (str(images_metas[key].name)[-8:]).replace(".png", ".exr")
+        depth_name = os.path.join(args.depth_dir, depth_name)
+        # print("depth_name", depth_name)
+        if os.path.exists(depth_name):
+            points_3d = load_world_points_for_frame(depth_name, rotmat_w2c[count], tvec_w2c[count], cam_intrinsics)
+        images_points3d[key] = points_3d
+        # pts_idx = images_metas[key].point3D_ids 
+        # mask = pts_idx >= 0 # what is the mask means here >= 0
+        # mask *= pts_idx < len(points3d_ordered)
+        # pts_idx = pts_idx[mask]
+        # if len(pts_idx) > 0:
+        #     image_points3d = points3d_ordered[pts_idx]
+        #     mask = (image_points3d != 0).sum(axis=-1)
+        #     # images_metas[key]["points3d"] = image_points3d[mask>0]
+        #     # each images, add the 3d world points
+        #     images_points3d[key] = image_points3d[mask>0]
+        # else:
+        #     # images_metas[key]["points3d"] = np.array([])
+        #     images_points3d[key] = np.array([])
 
 
     global_bbox = np.stack([cam_centers.min(axis=0), cam_centers.max(axis=0)])
@@ -184,57 +254,41 @@ if __name__ == '__main__':
         if j == n_height - 1:
             corner_max_for_pts[1] = 1e12
 
-        mask = np.all(xyzsC < corner_max_for_pts, axis=-1) * np.all(xyzsC > corner_min_for_pts, axis=-1)
-        new_xyzs = xyzsC[mask]
-        new_colors = colorsC[mask]
-        new_indices = indicesC[mask]
-        new_errors = errorsC[mask]
-        new_images = n_imagesC[mask]
+        # mask = np.all(xyzsC < corner_max_for_pts, axis=-1) * np.all(xyzsC > corner_min_for_pts, axis=-1)
+        # new_xyzs = xyzsC[mask]
+        # new_colors = colorsC[mask]
+        # new_indices = indicesC[mask]
+        # new_errors = errorsC[mask]
 
-        # list do not support mask, we do it with 
-        # new_indices_2d = indices_2dC[mask]
-        # new_image_ids = image_idsC[mask]
-        new_indices_2d = []
-        new_image_ids = []
-        for indices_i, image_id_i, keep in zip(indices_2dC, image_idsC, mask):
-            if keep:
-                new_indices_2d.append(indices_i)
-                new_image_ids.append(image_id_i)
-
-        # print("Number of points in chunk: ", len(new_xyzs), len(new_indices_2d), len(new_image_ids)) 
-
-        new_colors = np.clip(new_colors, 0, 255).astype(np.uint8)
+        # new_colors = np.clip(new_colors, 0, 255).astype(np.uint8)
 
         valid_cam = np.all(cam_centers < corner_max, axis=-1) * np.all(cam_centers > corner_min, axis=-1)
 
+        # camera in this chunk
+        print(f"{valid_cam.sum()} cameras in chunk")
+
+        # extend for a overlap
         box_center = (corner_max + corner_min) / 2
         extent = (corner_max - corner_min) / 2
         acceptable_radius = 2
         extended_corner_min = box_center - acceptable_radius * extent
         extended_corner_max = box_center + acceptable_radius * extent
 
-        print("corner pos", corner_max_for_pts, corner_min_for_pts, corner_max, corner_min)
-
         for cam_idx, key in enumerate(images_metas):
             # if not valid_cam[cam_idx]:
             image_points3d =  images_points3d[key]
             # print("image_points3d", image_points3d.shape)
             n_pts = (np.all(image_points3d < corner_max_for_pts, axis=-1) * np.all(image_points3d > corner_min_for_pts, axis=-1)).sum() if len(image_points3d) > 0 else 0
-            # print("valid_n_pts", n_pts)
 
-            # If within chunk
+            # If within chunk, means this view see a lot enough points inside this chunk
             if np.all(cam_centers[cam_idx] < corner_max) and np.all(cam_centers[cam_idx] > corner_min):
                 valid_cam[cam_idx] = n_pts > 50
-                # print("get valid cam", n_pts)
             # If within 2x of the chunk
             elif np.all(cam_centers[cam_idx] < extended_corner_max) and np.all(cam_centers[cam_idx] > extended_corner_min):
                 valid_cam[cam_idx] = n_pts > 50 and random.uniform(0, 1) > 0.5
-                # add soming camera in extend to valid
-                # print("get valid cam in extend area", n_pts)
             # All distances
             if (not valid_cam[cam_idx]) and n_pts > 10 and args.add_far_cams:
                 valid_cam[cam_idx] = random.uniform(0, 0.5) < (float(n_pts) / len(image_points3d))
-                # print("get valid cam in all area", n_pts)
             
         print(f"{valid_cam.sum()} valid cameras after visibility-base selection")
         if args.lapla_thresh > 0:
@@ -279,34 +333,29 @@ if __name__ == '__main__':
                     tvec = image_meta.tvec,
                     camera_id = image_meta.camera_id,
                     name = image_meta.name,
-                    xys = image_meta.xys,
-                    point3D_ids = image_meta.point3D_ids
-                    # xys = [],
-                    # point3D_ids = []
+                    xys = [],
+                    point3D_ids = []
                 )
-                # here it create image file with no 3d points
 
-                if os.path.exists(test_file) and image_meta.name in blending_dict:
-                    n_pts = np.isin(image_meta.point3D_ids, new_indices).sum()
-                    blending_dict[image_meta.name][f"{i}_{j}"] = str(n_pts)
+                # if os.path.exists(test_file) and image_meta.name in blending_dict:
+                #     n_pts = np.isin(image_meta.point3D_ids, new_indices).sum()
+                #     blending_dict[image_meta.name][f"{i}_{j}"] = str(n_pts)
 
-            # sanity check
-            # print("new_image_ids[idx]", new_image_ids[idx].shape)
-            points_out = {
-                new_indices[idx] : Point3D(
-                        id=new_indices[idx],
-                        xyz= new_xyzs[idx],
-                        rgb=new_colors[idx],
-                        error=new_errors[idx],
-                        image_ids=new_image_ids[idx],
-                        point2D_idxs=new_indices_2d[idx]
 
-                        # image_ids=new_imagesC[idx],
-                        # image_ids=np.array([]),
-                        # point2D_idxs=np.array([])
-                    )
-                for idx in range(len(new_xyzs))
-            }
+            # points_out = {
+            #     new_indices[idx] : Point3D(
+            #             id=new_indices[idx],
+            #             xyz= new_xyzs[idx],
+            #             rgb=new_colors[idx],
+            #             error=new_errors[idx],
+            #             image_ids=np.array([]),
+            #             point2D_idxs=np.array([])
+            #         )
+            #     for idx in range(len(new_xyzs))
+            # }
+
+            # create empty points3d
+            points_out = {}
 
             write_model(cam_intrinsics, images_out, points_out, out_colmap, f".{args.model_type}")
 
@@ -316,11 +365,12 @@ if __name__ == '__main__':
                 f.write(' '.join(map(str, corner_max - corner_min)))
         else:
             excluded_chunks.append([i, j])
-            print("Chunk excluded",valid_cam.sum() )
+            print("Chunk excluded")
 
     extent = global_bbox[1] - global_bbox[0]
     n_width = round(extent[0] / args.chunk_size)
     n_height = round(extent[1] / args.chunk_size)
+    
 
     for i in range(n_width):
         for j in range(n_height):
