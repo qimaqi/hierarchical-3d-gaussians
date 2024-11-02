@@ -102,6 +102,8 @@ class Scene:
                 f.write(str(self.gaussians.skybox_points))
             if self.gaussians._xyz.size(0) > 8_000_000:
                 self.gaussians.save_pt(point_cloud_path)
+                self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"))
+                self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud_d5.ply"), dowmsample=5)
             else:
                 self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"))
 

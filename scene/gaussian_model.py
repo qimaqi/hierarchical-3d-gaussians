@@ -488,7 +488,7 @@ class GaussianModel:
             f.write(rotation.numpy().tobytes())
 
 
-    def save_ply(self, path):
+    def save_ply(self, path, downsample=1):
         mkdir_p(os.path.dirname(path))
 
         xyz = self._xyz.detach().cpu().numpy()
@@ -500,6 +500,16 @@ class GaussianModel:
         rotation = self._rotation.detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
+
+        if downsample > 1:
+            downsample = int(downsample)
+            xyz = xyz[::downsample]
+            normals = normals[::downsample]
+            f_dc = f_dc[::downsample]
+            f_rest = f_rest[::downsample]
+            opacities = opacities[::downsample]
+            scale = scale[::downsample]
+            rotation = rotation[::downsample]
 
         elements = np.empty(xyz.shape[0], dtype=dtype_full)
         attributes = np.concatenate((xyz, normals, f_dc, f_rest, opacities, scale, rotation), axis=1)

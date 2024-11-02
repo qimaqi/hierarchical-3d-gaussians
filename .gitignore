@@ -6,3 +6,5 @@ tensorboard_3d
 screenshots
 *.ply
 *.diff
+scripts/sh_jobs/joblogs/
+submodules/

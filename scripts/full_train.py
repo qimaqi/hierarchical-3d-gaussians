@@ -95,6 +95,7 @@ if __name__ == '__main__':
             while is_job_finished(coarse_train) == "":
                 time.sleep(10)
         else:
+            # train corase
             train_coarse_args =  " ".join([
                 "python", "train_coarse.py",
                 "-s", colmap_dir,

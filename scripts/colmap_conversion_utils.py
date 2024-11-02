@@ -193,9 +193,9 @@ class ImageDepth2Colmap():
             depth_target_path = os.path.join(self.output_path, 'depths_exr', f"{str(i).zfill(8)}.exr")
             inv_depth_target_path = os.path.join(self.output_path, 'depths', f"{str(i).zfill(8)}.png")
             if not overwrite:
-                if not os.path.exists(img_path):
+                if not os.path.exists(img_target_path):
                     shutil.copy(img_path, img_target_path)
-                if not os.path.exists(depth_path):
+                if not os.path.exists(depth_target_path):
                     shutil.copy(depth_path, depth_target_path)
             else:
                 shutil.copy(img_path, img_target_path)
@@ -473,7 +473,7 @@ class ImageDepth2Colmap():
                     line = line.strip().split()
                     point3d_id = int(line[0])
                     track = line[8:]
-                    print("track", track)
+                    # print("track", track)
                     track = [[int(track[i]), int(track[i+1])] for i in range(0, len(track), 2)]
                     track_summary[point3d_id-1] += track
 

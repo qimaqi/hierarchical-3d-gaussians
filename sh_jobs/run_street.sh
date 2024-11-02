@@ -4,10 +4,9 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus=l4-24g:1
-#SBATCH --cpus-per-task=12
 #SBATCH --output=./joblogs/h3dgs_matrix_city_street_%j.log      # Redirect stdout to a log file
 #SBATCH --error=./joblogs/h3dgs_matrix_city_street_%j.error     # Redirect stderr to a separate error log file
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 
 
 # cuda
@@ -22,8 +21,8 @@ source ~/.bashrc
 micromamba activate h3dgs
 cd ..
 # python scripts/full_train.py --project_dir ${DATASET_DIR}
-# python train_coarse.py -s /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/camera_calibration/aligned -i /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/camera_calibration/rectified/images --position_lr_init 0 --position_lr_final 0 --model_path /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/output/scaffold_nodepth --port 6009 --iterations 50000 
-# # --skybox_num 10000
+
+python train_coarse.py -s /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_all_th50/camera_calibration/aligned -i /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_all_th50/camera_calibration/rectified/images --position_lr_init 0 --position_lr_final 0 --model_path /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_all_th50/output/scaffold_nodepth --port 6009 --iterations 50000 --skybox_num 100000
 
 # python train_coarse.py -s /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/camera_calibration/aligned -i /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/camera_calibration/rectified/images  --position_lr_init 0 --position_lr_final 0 --model_path /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/output/scaffold_depth --port 6011 --depths /data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city/steet_blocks_A_debug/camera_calibration/rectified/depths
 
@@ -36,7 +35,7 @@ cd ..
 
 # python train_post.py -s ${DATASET_DIR}/camera_calibration/chunks/2_3 --model_path ${DATASET_DIR}/output/chunks/2_3 --hierarchy ${DATASET_DIR}/output/chunks/2_3/hierarchy.hier --iterations 15000 --feature_lr 0.0005 --opacity_lr 0.01 --scaling_lr 0.001 --eval
 
-python render_hierarchy.py -s ${DATASET_DIR}/camera_calibration/chunks/2_3 --model_path ${DATASET_DIR}/output/chunks/2_3 --hierarchy ${DATASET_DIR}/output/chunks/2_3/hierarchy.hier_opt --out_dir ${DATASET_DIR}/output/chunks/2_3 --eval
+# python render_hierarchy.py -s ${DATASET_DIR}/camera_calibration/chunks/2_3 --model_path ${DATASET_DIR}/output/chunks/2_3 --hierarchy ${DATASET_DIR}/output/chunks/2_3/hierarchy.hier_opt --out_dir ${DATASET_DIR}/output/chunks/2_3 --eval
 
 
 # submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${OUTPUT_DIR}/point_cloud/iteration_30000/point_cloud.ply ${CHUNK_DIR}  ${OUTPUT_DIR} 

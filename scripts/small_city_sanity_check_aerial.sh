@@ -11,5 +11,5 @@
 source ~/.bashrc
 micromamba activate city
 # python matrixcity_street_to_colmap_all.py --start_idx=0 --end_idx=5000
-python matrixcity_big_street_to_colmap_all.py --start_idx=0 --end_idx=5000 --overwrite
-# srun --nodes=1 --ntasks=1 --cpus-per-task=12 --mem=64G  --time=04:00:00  --nodelist=gcpl4-eu-2  --pty bash -i cpu tasks
+python matrixcity_sanity_check.py --city_name=small_city --view_name=aerial 
+# srun --nodes=1 --ntasks=1 --cpus-per-task=12 --mem=64G  --time=04:00:00  --nodelist=gcpl4-eu-2  --pty bash -i

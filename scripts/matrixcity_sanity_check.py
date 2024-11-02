@@ -18,10 +18,7 @@ import PIL
 import numpy as np
 import os
 from scipy.spatial.transform import Rotation
-
-# 
 import numpy as np
-from scipy.spatial.transform import Rotation
 import os
 import shutil
 from read_write_model import read_images_binary,write_images_binary, Image
@@ -111,10 +108,6 @@ def arg_parser():
     parser.add_argument('--input_root', type=str, default='/data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/', help='Input directory')
     parser.add_argument('--city_name', type=str, default='small_city', help='Output directory')
     parser.add_argument('--view_name', type=str, default='street', help='View name')
-    parser.add_argument('--start_idx', type=int, default=0, help='Start index')
-    parser.add_argument('--end_idx', type=int, default=1e8, help='End index')
-    parser.add_argument('--merge', action='store_true', help='Merge all the images', default=False)
-    parser.add_argument('--overwrite', action='store_true', help='Overwrite existing files', default=False)
     args = parser.parse_args()
     return args
 
@@ -125,19 +118,14 @@ def main():
     city_name = args.city_name
     view_name = args.view_name
     # input_dir = os.path.join(input_root, city_name)
-    output_dir = os.path.join(input_root, city_name, 'colmap_'+view_name , 'camera_calibration' ,'rectified')
-    os.makedirs(output_dir, exist_ok=True)
-
 
     if city_name == 'small_city':
         city_street_list = ["small_city_road_down", "small_city_road_horizon",  "small_city_road_outside",  "small_city_road_vertical"]
         city_aerial_list = ["block_1", "block_2", "block_3",  "block_4", "block_5" , "block_6", "block_7", "block_8", "block_9" , "block_10"]
-        pointscloud_paths = ['/data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city_pointcloud/point_cloud_ds20/street/Block_all.ply', '/data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/small_city_pointcloud/point_cloud_ds20/aerial/Block_all.ply']
 
     elif city_name == 'big_city':
         city_street_list = ["bottom_area", "left_area",  "right_area",  "top_area"]
         city_aerial_list = ["big_high_block_1", "big_high_block_2", "big_high_block_3", "big_high_block_4", "big_high_block_5" , "big_high_block_6"]
-        pointscloud_paths = ['big_city_pointcloud/point_cloud_ds20/street/Block_all.ply', 'big_city_pointcloud/point_cloud_ds20/aerial/Block_all.ply']
 
     task_split = ['train', 'test']
 
@@ -149,9 +137,6 @@ def main():
         cy = 500.0
         width = 1000.0
         height = 1000.0
-        pointcloud_path = pointscloud_paths[0]
-        depth_max = 50
-        depth_threshold = 0.1
 
     elif view_name == 'aerial':
         city_list = city_aerial_list
@@ -161,14 +146,7 @@ def main():
         cy = 540.0
         width = 1920.0
         height = 1080.0
-        pointcloud_path = pointscloud_paths[1]
-        depth_max = 500
-        depth_threshold = 1.0
 
-
-    imgs_path_all = []
-    depth_path_all = []
-    c2ws_all = []
 
     # frames_block_A = meta_file['frames']
     for task_i in task_split:
@@ -176,8 +154,15 @@ def main():
             if task_i == 'test':
                 block_name = block_name + '_test'
             
-            transform_path_sub = os.path.join(input_root, city_name, view_name , task_i,  block_name, f'transforms_correct.json')
+            transform_path_sub = os.path.join(input_root, city_name, view_name , task_i,  block_name, f'transforms.json')
+            transform_path_sub_correct_path = os.path.join(input_root, city_name, view_name , task_i,  block_name, f'transforms_correct.json')
 
+            if os.path.exists(transform_path_sub_correct_path):
+                print("transform_path_sub_correct_path exists", transform_path_sub_correct_path)
+                continue
+
+            transform_path_sub_correct = {'intrinsics': [fl_x, fl_y, cx, cy], 'width': width, 'height': height, 'frames': []}
+            
             with open(transform_path_sub, "r") as f:
                 meta_block_i = json.load(f)   
                 meta_block_frame_i = meta_block_i['frames']
@@ -185,10 +170,8 @@ def main():
                     img_idx = frame["frame_index"]
                     img_path_abs = os.path.join(input_root, city_name, view_name , task_i,  block_name, str(img_idx).zfill(4)+'.png')
                     depth_path_abs = os.path.join(input_root, city_name + '_depth', view_name , task_i,  block_name+'_depth', str(img_idx).zfill(4)+'.exr')
-
                     if os.path.exists(img_path_abs) and os.path.exists(depth_path_abs):
-                        imgs_path_all.append(img_path_abs)
-                        depth_path_all.append(depth_path_abs)
+    
                         c2w=np.array(frame["rot_mat"])
                         # check unit of distance (m or 100m)
                         c2w[3,3]=1
@@ -199,41 +182,31 @@ def main():
                             c2w[:3,:3]*=100 # bug of data
                         assert not np.allclose(composed_mat, np.eye(3)), f"composed_mat {composed_mat}"
                         c2w = gl2world_to_cv2world(c2w)
-                        c2ws_all.append(c2w.tolist()) 
                         if count_i % 100 == 0:
                             # for debug use
                             print("add img_path_abs", img_path_abs)
                             print("add depth_path_abs", depth_path_abs)
+                        z_axis = c2w[:3, :3][:3, 2]
+                        if z_axis[-1] > 0.9:
+                            continue
+
+                        try:
+                            # try load images and depth 
+                            img = ImagePIL.open(img_path_abs).convert('RGB')
+                            depth =  cv2.imread(depth_path_abs, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)[...,0]
+                            # if all depth is 65504, then skip
+                            if np.all(depth==65504):
+                                continue
+                        except Exception as e:
+                            print("error", e)
+                            continue
                     else:
                         raise ValueError(f"img_path_abs or depth path abs not exists, {img_path_abs}, {depth_path_abs}")
+                
+                    transform_path_sub_correct['frames'].append(frame)
 
-
-    c2ws_all = np.stack(c2ws_all) #[B,4,4]
-    centers = c2ws_all[:, :3, 3]
-
-
-    # centers x min -851.5166015625001 centers x max -120.55117034912108
-    # centers y min -546.9083251953125 centers y max -0.22081592679023743
-    # centers z min 3.0 centers z max 3.0
-    # raise ValueError("stop here")
-    # self.points3d['XYZ'] x range -1490.6496047973633 1363.3264541625977
-    # self.points3d['XYZ'] y range -1304.3548583984375 1228.7542343139648
-    # self.points3d['XYZ'] z range -3.401993215084076 502.8411388397217
-
-    converter = ImageDepth2Colmap(imgs_path_all, depth_path_all, c2ws_all ,pointcloud_path, {'model': 'PINHOLE', 'width': int(width), 'height': int(height), 'params': [fl_x, fl_y, cx, cy]}, output_dir)
-
-
-    converter.collect_files(overwrite=args.overwrite)
-    print("finish collect_files")
-    # save cameras.txt
-    converter.save_cameras_txt()
-    converter.init_globl_points3d()
-    
-    if not args.merge:
-        converter.save_images_txt(depth_max=depth_max, depth_threshold=depth_threshold, debug=False,tmp_save=False, start_idx=args.start_idx, end_idx=args.end_idx)
-    else:
-        converter.merge_images_points_txt() 
-
+            with open(transform_path_sub_correct_path, "w") as f:
+                json.dump(transform_path_sub_correct, f, indent=4)
 
 
 if __name__ == '__main__':
