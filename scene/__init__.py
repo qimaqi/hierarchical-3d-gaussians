@@ -44,7 +44,7 @@ class Scene:
         if os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.alpha_masks, args.depths, args.eval, args.train_test_exp)
         else:
-            assert False, "Could not recognize scene type!"
+            assert False, f"Could not recognize scene type!,{args.source_path}"
 
         if not self.loaded_iter:
             with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, "input.ply") , 'wb') as dest_file:
@@ -103,7 +103,7 @@ class Scene:
             if self.gaussians._xyz.size(0) > 8_000_000:
                 self.gaussians.save_pt(point_cloud_path)
                 self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"))
-                self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud_d5.ply"), dowmsample=5)
+                self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud_d5.ply"), downsample=5)
             else:
                 self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"))
 
