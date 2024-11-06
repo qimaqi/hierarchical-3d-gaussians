@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--chunks_dir', required=True)
-    parser.add_argument('--depths_dir', required=True)
+    # parser.add_argument('--depths_dir', required=True)
     parser.add_argument('--model_type', default="bin")
     args = parser.parse_args()
 

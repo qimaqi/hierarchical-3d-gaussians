@@ -1,3 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=unzip
+#SBATCH --nodes=1
+#SBATCH --ntasks=8
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=8G
+#SBATCH --output=./joblogs/unzip_%j.log      # Redirect stdout to a log file
+#SBATCH --time=24:00:00
+
+
 # Directory containing the .tar.gz files
 SOURCE_DIR="."
 # Directory where all extracted files will be merged

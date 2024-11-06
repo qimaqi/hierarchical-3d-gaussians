@@ -1,0 +1,92 @@
+Many modules are hidden in this stack. Use "module --show_hidden spider SOFTWARE" if you are not able to find the required software
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0 [06/11 07:26:11]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/0_0/sparse/0/depth_params.json'. [06/11 07:26:11]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012552 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_0 [06/11 07:26:23]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/0_0/sparse/0/depth_params.json'. [06/11 07:26:23]
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1 [06/11 07:26:27]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/0_1/sparse/0/depth_params.json'. [06/11 07:26:29]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012601 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/0_1 [06/11 07:26:33]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/0_1/sparse/0/depth_params.json'. [06/11 07:26:34]
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1 [06/11 07:26:38]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/1_1/sparse/0/depth_params.json'. [06/11 07:26:41]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012653 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/1_1 [06/11 07:26:45]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/1_1/sparse/0/depth_params.json'. [06/11 07:26:48]
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1 [06/11 07:26:52]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/2_1/sparse/0/depth_params.json'. [06/11 07:26:58]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012708 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/2_1 [06/11 07:27:02]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/2_1/sparse/0/depth_params.json'. [06/11 07:27:07]
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1 [06/11 07:27:11]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/3_1/sparse/0/depth_params.json'. [06/11 07:27:16]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012779 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/3_1 [06/11 07:27:21]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/3_1/sparse/0/depth_params.json'. [06/11 07:27:26]
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0 [06/11 07:27:30]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/4_0/sparse/0/depth_params.json'. [06/11 07:27:31]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012843 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_0 [06/11 07:27:35]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/4_0/sparse/0/depth_params.json'. [06/11 07:27:35]
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1 [06/11 07:27:40]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/4_1/sparse/0/depth_params.json'. [06/11 07:27:42]
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1/point_cloud/iteration_30000/point_cloud.ply
+Could not load .ply. Attempt loading .bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1/point_cloud/iteration_30000/point_cloud.bin
+/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1/point_cloud/iteration_30000/point_cloud.bin
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  File not found!
+/var/spool/slurm/slurmd/state/job14344668/slurm_script: line 45: 1012891 Aborted                 submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks/${CHUNK_NAME} ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+Optimizing /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1
+Output folder: /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train//output/trained_chunks/4_1 [06/11 07:27:47]
+Error: depth_params.json file not found at path '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/sciart/train/camera_calibration/chunks/4_1/sparse/0/depth_params.json'. [06/11 07:27:49]

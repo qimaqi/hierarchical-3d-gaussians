@@ -25,7 +25,10 @@ RAW_PHOTO_PATH=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_result
 CAMERA_POSE_PATH=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/residence/residence-pixsfm
 
 # python copy_images.py --image_path $RAW_PHOTO_PATH --dataset_path $CAMERA_POSE_PATH
+# python preprocess/generate_chunks.py --project_dir /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/residence/residence-pixsfm/train/ --min_n_cams 20 --chunk_size 100  --skip_bundle_adjustment
+
 python preprocess/generate_chunks.py --project_dir /cluster/work/cvl/qimaqi/cvpr_2025/datasets/urban3d/colmap_results/residence/residence-pixsfm/train/ --min_n_cams 20 --chunk_size 100  --skip_bundle_adjustment
+
 
 # srun --ntasks=8 --mem-per-cpu=4G --gpus=rtx_3090:1  --time=240 --pty bash -i
 # srun --ntasks=8 --mem-per-cpu=8G --time=240 --pty bash -i

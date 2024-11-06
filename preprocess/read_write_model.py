@@ -485,8 +485,28 @@ def detect_model_format(path, ext):
 
     return False
 
+def read_model_npc(path, ext=""):
+    # try to detect the extension automatically
+    if ext == "":
+        if detect_model_format(path, ".bin"):
+            ext = ".bin"
+        elif detect_model_format(path, ".txt"):
+            ext = ".txt"
+        else:
+            print("Provide model format: '.bin' or '.txt'")
+            return
 
-def read_model(path, ext=""):
+    if ext == ".txt":
+        cameras = read_cameras_text(os.path.join(path, "cameras" + ext))
+        images = read_images_text(os.path.join(path, "images" + ext))
+    else:
+        cameras = read_cameras_binary(os.path.join(path, "cameras" + ext))
+        images = read_images_binary(os.path.join(path, "images" + ext))
+
+    return cameras, images
+
+
+def read_model(path, ext="", ignore_points3D=False):
     # try to detect the extension automatically
     if ext == "":
         if detect_model_format(path, ".bin"):
@@ -505,6 +525,7 @@ def read_model(path, ext=""):
         cameras = read_cameras_binary(os.path.join(path, "cameras" + ext))
         images = read_images_binary(os.path.join(path, "images" + ext))
         points3D = read_points3D_binary(os.path.join(path, "points3D") + ext)
+   
     return cameras, images, points3D
 
 

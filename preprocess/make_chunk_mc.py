@@ -32,11 +32,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_dir', required=True)
     parser.add_argument('--images_dir', required=True)
+    parser.add_argument('--depths_dir', required=True)
     parser.add_argument('--chunk_size', default=100, type=float)
     parser.add_argument('--min_padd', default=0.2, type=float)
-    parser.add_argument('--lapla_thresh', default=0, type=float, help="Discard images if their laplacians are < mean - lapla_thresh * std") # 1
+    parser.add_argument('--lapla_thresh', default=1, type=float, help="Discard images if their laplacians are < mean - lapla_thresh * std") # 1
     parser.add_argument('--min_n_cams', default=100, type=int) # 100
-    parser.add_argument('--max_n_cams', default=1500, type=int) # 1500
+    parser.add_argument('--max_n_cams', default=3000, type=int) # 1500
     parser.add_argument('--output_path', required=True)
     parser.add_argument('--add_far_cams', default=True)
     parser.add_argument('--model_type', default="bin")
@@ -53,86 +54,33 @@ if __name__ == '__main__':
     cam_intrinsics, images_metas, points3d = read_model(args.base_dir, ext=f".{args.model_type}")
 
     # data basic info
-    print("images_metas keys", len(images_metas.keys())) 
-    print("points3d keys", len(points3d.keys())) # 47936)
-    key_list = list(points3d.keys())
-    key_list = np.array(key_list).astype(np.int64)
-    print(" np.min(points3d.keys()), np.max(points3d.keys())",  np.min(key_list), np.max(key_list))
-    # images_metas keys 402
-    # points3d keys 47936
-    # pts_idx might not be continuous 
-
-    cam_centers = np.array([
-        -qvec2rotmat(images_metas[key].qvec).astype(np.float32).T @ images_metas[key].tvec.astype(np.float32)
-        for key in images_metas
-    ])
-
-    n_pts = get_nb_pts(images_metas)
-    print("Number of points: ", n_pts) #
-
-    xyzs = np.zeros([n_pts, 3], np.float32)
-    errors = np.zeros([n_pts], np.float32) + 9e9
-    indices = np.zeros([n_pts], np.int64)
-    n_images = np.zeros([n_pts], np.int64)
-    colors = np.zeros([n_pts, 3], np.float32)
-    indices_2d = [] #np.zeros([n_pts], np.int64)
-    image_ids = [] #np.zeros([n_pts], np.int64)
-
-    idx = 0    
-    # parse the points3d to get the xyzs, indices, errors, colors, n_images
-    # each points3d have a key name
-    # map all information to each list
+    xyzs = np.zeros((len(points3d), 3), dtype=np.float32)
+    indices = np.zeros(len(points3d), dtype=np.int32)
+    errors = np.zeros(len(points3d), dtype=np.float32)
+    colors = np.zeros((len(points3d), 3), dtype=np.float32)
+    idx = 0
     for key in points3d:
-
         # print("points3d[key].point2D_idxs",type(points3d[key].point2D_idxs), np.shape(points3d[key].point2D_idxs))
         # different points data properties
         xyzs[idx] = points3d[key].xyz # 3d world points
         indices[idx] = points3d[key].id # 
         errors[idx] = points3d[key].error
         colors[idx] = points3d[key].rgb
-        n_images[idx] = len(points3d[key].image_ids)
-        # indices_2d[idx] = points3d[key].point2D_idxs
-        indices_2d.append(points3d[key].point2D_idxs)
-        # image_ids[idx] = points3d[key].image_ids
-        image_ids.append(points3d[key].image_ids)
+        # n_images[idx] = len(points3d[key].image_ids)
+        # # indices_2d[idx] = points3d[key].point2D_idxs
+        # indices_2d.append(points3d[key].point2D_idxs)
+        # # image_ids[idx] = points3d[key].image_ids
+        # image_ids.append(points3d[key].image_ids)
         idx +=1
-    # id do not matter, a lot of sparse exist
 
-    mask = errors < 1e1
-    print(f"Number of points with error < 1e1: {mask.sum()}") # 47936
-    # how to add more points here
-    # 67639 74413
+    print("images_metas keys", len(images_metas.keys())) 
+    print("xyzs range", np.min(xyzs[:, 0]), np.max(xyzs[:, 0]), np.min(xyzs[:, 1]), np.max(xyzs[:, 1]), np.min(xyzs[:, 2]), np.max(xyzs[:, 2]))
 
-    # mask *= n_images > 3
-    xyzsC, colorsC, errorsC, indicesC, n_imagesC = xyzs[mask], colors[mask], errors[mask], indices[mask], n_images[mask]
-    # indices_2dC, image_idsC = indices_2d[mask], image_ids[mask]
-    indices_2dC = []
-    image_idsC = []
-    for indices_i, image_id_i, keep in zip(indices_2d, image_ids, mask):
-        if keep:
-            indices_2dC.append(indices_i)
-            image_idsC.append(image_id_i)
 
-    # indicesC.max, the length of number of points
-    points3d_ordered = np.zeros([indicesC.max()+1, 3])
-    points3d_ordered[indicesC] = xyzsC # reoreder is masked out which have less errors
-    images_points3d = {}
-    # this operation give every image key its 3d points we can replace with depth map 
-
-    for key in images_metas:
-        pts_idx = images_metas[key].point3D_ids 
-        mask = pts_idx >= 0 #
-        mask *= pts_idx < len(points3d_ordered)
-        pts_idx = pts_idx[mask]
-        if len(pts_idx) > 0:
-            image_points3d = points3d_ordered[pts_idx]
-            mask = (np.abs(image_points3d) != 0).sum(axis=-1) # why only choose > 0 part
-            # images_metas[key]["points3d"] = image_points3d[mask>0]
-            # each images, add the 3d world points
-            images_points3d[key] = image_points3d[mask>0]
-        else:
-            # images_metas[key]["points3d"] = np.array([])
-            images_points3d[key] = np.array([])
+    cam_centers = np.array([
+        -qvec2rotmat(images_metas[key].qvec).astype(np.float32).T @ images_metas[key].tvec.astype(np.float32)
+        for key in images_metas
+    ])
 
 
     global_bbox = np.stack([cam_centers.min(axis=0), cam_centers.max(axis=0)])
@@ -146,19 +94,19 @@ if __name__ == '__main__':
     global_bbox[0, 2] = -1e12
     global_bbox[1, 2] = 1e12
 
-    def get_var_of_laplacian(key):
-        image = cv2.imread(os.path.join(args.images_dir, images_metas[key].name))
-        if image is not None:
-            gray = cv2.cvtColor(image[..., :3], cv2.COLOR_BGR2GRAY)
-            return cv2.Laplacian(gray, cv2.CV_32F).var()
-        else:
-            return 0   
+    # def get_var_of_laplacian(key):
+    #     image = cv2.imread(os.path.join(args.images_dir, images_metas[key].name))
+    #     if image is not None:
+    #         gray = cv2.cvtColor(image[..., :3], cv2.COLOR_BGR2GRAY)
+    #         return cv2.Laplacian(gray, cv2.CV_32F).var()
+    #     else:
+    #         return 0   
         
-    if args.lapla_thresh > 0: 
-        laplacians = Parallel(n_jobs=-1, backend="threading")(
-            delayed(get_var_of_laplacian)(key) for key in images_metas
-        )
-        laplacians_dict = {key: laplacian for key, laplacian in zip(images_metas, laplacians)}
+    # if args.lapla_thresh > 0: 
+    #     laplacians = Parallel(n_jobs=-1, backend="threading")(
+    #         delayed(get_var_of_laplacian)(key) for key in images_metas
+    #     )
+    #     laplacians_dict = {key: laplacian for key, laplacian in zip(images_metas, laplacians)}
 
     excluded_chunks = []
     chunks_pcd = {}
@@ -184,28 +132,7 @@ if __name__ == '__main__':
         if j == n_height - 1:
             corner_max_for_pts[1] = 1e12
 
-        mask = np.all(xyzsC < corner_max_for_pts, axis=-1) * np.all(xyzsC > corner_min_for_pts, axis=-1)
-        new_xyzs = xyzsC[mask]
-        new_colors = colorsC[mask]
-        new_indices = indicesC[mask]
-        new_errors = errorsC[mask]
-        new_images = n_imagesC[mask]
-
-        # list do not support mask, we do it with 
-        # new_indices_2d = indices_2dC[mask]
-        # new_image_ids = image_idsC[mask]
-        new_indices_2d = []
-        new_image_ids = []
-        for indices_i, image_id_i, keep in zip(indices_2dC, image_idsC, mask):
-            if keep:
-                new_indices_2d.append(indices_i)
-                new_image_ids.append(image_id_i)
-
-        # print("Number of points in chunk: ", len(new_xyzs), len(new_indices_2d), len(new_image_ids)) 
-
-        new_colors = np.clip(new_colors, 0, 255).astype(np.uint8)
-
-        valid_cam = np.all(cam_centers < corner_max, axis=-1) * np.all(cam_centers > corner_min, axis=-1)
+        valid_cam = np.all(cam_centers < corner_max, axis=-1) * np.all(cam_centers > corner_min, axis=-1) # cam
 
         box_center = (corner_max + corner_min) / 2
         extent = (corner_max - corner_min) / 2
@@ -216,43 +143,48 @@ if __name__ == '__main__':
         print("corner pos", corner_max_for_pts, corner_min_for_pts, corner_max, corner_min)
 
         for cam_idx, key in enumerate(images_metas):
-            # if not valid_cam[cam_idx]:
-            image_points3d =  images_points3d[key]
-            # print("image_points3d", image_points3d.shape)
-            n_pts = (np.all(image_points3d < corner_max_for_pts, axis=-1) * np.all(image_points3d > corner_min_for_pts, axis=-1)).sum() if len(image_points3d) > 0 else 0
-            # print("valid_n_pts", n_pts)
-
             # If within chunk
             if np.all(cam_centers[cam_idx] < corner_max) and np.all(cam_centers[cam_idx] > corner_min):
-                valid_cam[cam_idx] = n_pts > 50
+                valid_cam[cam_idx] = True
                 # print("get valid cam", n_pts)
             # If within 2x of the chunk
             elif np.all(cam_centers[cam_idx] < extended_corner_max) and np.all(cam_centers[cam_idx] > extended_corner_min):
-                valid_cam[cam_idx] = n_pts > 50 and random.uniform(0, 1) > 0.5
+                valid_cam[cam_idx] = random.uniform(0, 1) > 0.5
                 # add soming camera in extend to valid
                 # print("get valid cam in extend area", n_pts)
             # All distances
-            if (not valid_cam[cam_idx]) and n_pts > 10 and args.add_far_cams:
-                valid_cam[cam_idx] = random.uniform(0, 0.5) < (float(n_pts) / len(image_points3d))
-                # print("get valid cam in all area", n_pts)
+            # if (not valid_cam[cam_idx]) and args.add_far_cams:
+            #     valid_cam[cam_idx] = random.uniform(0, 0.5) < (float(n_pts) / len(image_points3d))
+            #     # print("get valid cam in all area", n_pts)
+            # if in the chunk, we assume to be valid
+
+        # get xyz which in the extended_corner_min and extended_corner_max
+        valid_pts = np.arange(len(points3d))[(xyzs < corner_max_for_pts).all(axis=-1) * (xyzs > corner_min_for_pts).all(axis=-1)]
+        print(f"{len(valid_pts)} valid points", valid_pts.shape)
+        new_indices = indices[valid_pts]
+        new_xyzs = xyzs[valid_pts]
+        new_errors = errors[valid_pts]
+        new_colors = colors[valid_pts]
+        new_colors = np.clip(new_colors, 0, 255).astype(np.uint8)
+
             
         print(f"{valid_cam.sum()} valid cameras after visibility-base selection")
-        if args.lapla_thresh > 0:
-            chunk_laplacians = np.array([laplacians_dict[key] for cam_idx, key in enumerate(images_metas) if valid_cam[cam_idx]])
-            laplacian_mean = chunk_laplacians.mean()
-            laplacian_std_dev = chunk_laplacians.std()
-            for cam_idx, key in enumerate(images_metas):
-                if valid_cam[cam_idx] and laplacians_dict[key] < (laplacian_mean - args.lapla_thresh * laplacian_std_dev):
-                    # print("image", key, "is blurry")
-                    # print("images_metas", images_metas.keys(), len(images_metas.keys()))
-                    # image = cv2.imread(f"{args.base_dir}/images/{images_metas[str(cam_idx)]['name']}")
-                    # cv2.imshow("blurry", image)
-                    # cv2.waitKey(0)
-                    # cv2.imwrite(f"{args.output_path}/blurry/{images_metas[key]['name']}", image)
-                    # cv2.imwrite(f"./blurry/{images_metas[key].name}", image)
-                    valid_cam[cam_idx] = False
+        # if args.lapla_thresh > 0:
+        #     chunk_laplacians = np.array([laplacians_dict[key] for cam_idx, key in enumerate(images_metas) if valid_cam[cam_idx]])
+        #     laplacian_mean = chunk_laplacians.mean()
+        #     laplacian_std_dev = chunk_laplacians.std()
+        #     for cam_idx, key in enumerate(images_metas):
+        #         if valid_cam[cam_idx] and laplacians_dict[key] < (laplacian_mean - args.lapla_thresh * laplacian_std_dev):
+        #             # print("image", key, "is blurry")
+        #             # print("images_metas", images_metas.keys(), len(images_metas.keys()))
+        #             # image = cv2.imread(f"{args.base_dir}/images/{images_metas[str(cam_idx)]['name']}")
+        #             # cv2.imshow("blurry", image)
+        #             # cv2.waitKey(0)
+        #             # cv2.imwrite(f"{args.output_path}/blurry/{images_metas[key]['name']}", image)
+        #             # cv2.imwrite(f"./blurry/{images_metas[key].name}", image)
+        #             valid_cam[cam_idx] = False
 
-            print(f"{valid_cam.sum()} after Laplacian")
+        #     print(f"{valid_cam.sum()} after Laplacian")
 
         if valid_cam.sum() > args.max_n_cams:
             for _ in range(valid_cam.sum() - args.max_n_cams):
@@ -298,12 +230,9 @@ if __name__ == '__main__':
                         xyz= new_xyzs[idx],
                         rgb=new_colors[idx],
                         error=new_errors[idx],
-                        image_ids=new_image_ids[idx],
-                        point2D_idxs=new_indices_2d[idx]
-
-                        # image_ids=new_imagesC[idx],
-                        # image_ids=np.array([]),
-                        # point2D_idxs=np.array([])
+                        image_ids=np.array([]),
+                        point2D_idxs=np.array([]),
+   
                     )
                 for idx in range(len(new_xyzs))
             }

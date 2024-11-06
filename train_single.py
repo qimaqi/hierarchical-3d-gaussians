@@ -123,6 +123,18 @@ def training(dataset, opt, pipe, saving_iterations, checkpoint_iterations, check
                 loss.backward()
                 iter_end.record()
 
+                # save some training images 
+                if iteration % 1000 == 0:
+                    with torch.no_grad():
+                        if not os.path.exists(os.path.join(scene.model_path, "training_images")):
+                            os.makedirs(os.path.join(scene.model_path, "training_images"))
+                        image_name = os.path.join(scene.model_path, "training_images", "image_iter_" + str(iteration) + ".png")
+                        from torchvision.transforms import ToPILImage
+                        ToPILImage()(image.cpu()).save(image_name)
+                        gt_image_name = os.path.join(scene.model_path, "training_images", "gt_image_iter_" + str(iteration) + ".png")
+                        ToPILImage()(gt_image.cpu()).save(gt_image_name)
+
+
                 with torch.no_grad():
                     # Progress bar
                     ema_loss_for_log = 0.4 * photo_loss.item() + 0.6 * ema_loss_for_log

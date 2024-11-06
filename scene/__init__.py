@@ -96,6 +96,7 @@ class Scene:
         point_cloud_path = os.path.join(self.model_path, "point_cloud/iteration_{}".format(iteration))
         mkdir_p(point_cloud_path)
         if self.gaussians.nodes is not None:
+            print("===== Saving hierarchical model =====")
             self.gaussians.save_hier()
         else:
             with open(os.path.join(point_cloud_path, "pc_info.txt"), "w") as f:

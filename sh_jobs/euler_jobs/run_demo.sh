@@ -54,13 +54,18 @@ DATASET_DIR=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_c
 # srun --nodes=1 -G1 --ntasks=1 --cpus-per-task=12 --mem=48G  --time=04:00:00  --gpus=l4-24g:1  --nodelist=gcpl4-eu-3  --pty bash -i 
 
 
-DATASET_DIR=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city/
+# DATASET_DIR=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city/
 # /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_eval
 # /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city
 
 
 # python scripts/full_train.py --project_dir ${DATASET_DIR} --extra_training_args '--exposure_lr_init 0.0 --eval' 
 
-python render_hierarchy.py -s /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_eval/aligned --model_path ${DATASET_DIR}/output --hierarchy ${DATASET_DIR}/output/merged.hier --out_dir ${DATASET_DIR}/output/renders --eval --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+# python render_hierarchy.py -s /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_eval/aligned --model_path ${DATASET_DIR}/output --hierarchy ${DATASET_DIR}/output/merged.hier --out_dir ${DATASET_DIR}/output/renders --eval --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
+
+# 3s for tau0, 1.1s for tau6
+
+# one trunk?
+python render_hierarchy.py -s /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city/camera_calibration/chunks/0_0 --model_path /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city/output/ --hierarchy /cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city/output/hierarchy.hier_opt --out_dir ${OUTPUT_DIR} --eval
 
 # python preprocess/copy_file_to_chunks.py
