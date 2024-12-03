@@ -108,12 +108,14 @@ def matrix_to_quaternion_and_translation(matrix):
 
 def arg_parser():
     parser = argparse.ArgumentParser(description='MatrixCity to Colmap')
-    parser.add_argument('--input_root', type=str, default='/data/work2-gcp-europe-west4-a/qimaqi/datasets/MatrixCity/', help='Input directory')
+    parser.add_argument('--input_root', type=str, default='/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/', help='Input directory')
     parser.add_argument('--city_name', type=str, default='small_city', help='Output directory')
     parser.add_argument('--view_name', type=str, default='street', help='View name')
     parser.add_argument('--start_idx', type=int, default=0, help='Start index')
     parser.add_argument('--end_idx', type=int, default=1e8, help='End index')
     parser.add_argument('--merge', action='store_true', help='Merge all the images', default=False)
+    parser.add_argument('--dense', action='store_true', help='if use dense folder', default=False)
+    parser.add_argument('--collect', action='store_true', help='Collect all the images', default=False)
     parser.add_argument('--overwrite', action='store_true', help='Overwrite existing files', default=False)
     args = parser.parse_args()
     return args
@@ -137,9 +139,13 @@ def main():
     elif city_name == 'big_city':
         city_street_list = ["bottom_area", "left_area",  "right_area",  "top_area"]
         city_aerial_list = ["big_high_block_1", "big_high_block_2", "big_high_block_3", "big_high_block_4", "big_high_block_5" , "big_high_block_6"]
-        pointscloud_paths = ['big_city_pointcloud/point_cloud_ds20/street/Block_all.ply', 'big_city_pointcloud/point_cloud_ds20/aerial/Block_all.ply']
+        pointscloud_paths = ['/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/big_city_pc/big_city_pointcloud_street', '/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/big_city_pc/big_city_pointcloud_aerial']
 
     task_split = ['train', 'test']
+
+    if args.dense:
+        task_split = ['train_dense', 'test']
+        city_street_list = ["small_city_road_down_dense", "small_city_road_horizon_dense",  "small_city_road_outside_dense",  "small_city_road_vertical_dense"]
 
     if view_name == 'street':
         city_list = city_street_list
@@ -174,8 +180,11 @@ def main():
     for task_i in task_split:
         for block_name in city_list:
             if task_i == 'test':
-                block_name = block_name + '_test'
-            
+                if args.dense:
+                    block_name = block_name.replace('_dense', '_test')
+                else:
+                    block_name = block_name + '_test'
+                    
             transform_path_sub = os.path.join(input_root, city_name, view_name , task_i,  block_name, f'transforms_correct.json')
 
             with open(transform_path_sub, "r") as f:
@@ -206,10 +215,14 @@ def main():
                             print("add depth_path_abs", depth_path_abs)
                     else:
                         raise ValueError(f"img_path_abs or depth path abs not exists, {img_path_abs}, {depth_path_abs}")
-
-
+    # save all intermediate files
+    imgs_path_all = np.array(imgs_path_all)
+    depth_path_all = np.array(depth_path_all)
     c2ws_all = np.stack(c2ws_all) #[B,4,4]
     centers = c2ws_all[:, :3, 3]
+    np.save(os.path.join(output_dir, 'imgs_path_all.npy'), imgs_path_all)
+    np.save(os.path.join(output_dir, 'depth_path_all.npy'), depth_path_all)
+    np.save(os.path.join(output_dir, 'c2ws_all.npy'), c2ws_all)
 
 
     # centers x min -851.5166015625001 centers x max -120.55117034912108
@@ -225,6 +238,9 @@ def main():
 
     converter.collect_files(overwrite=args.overwrite)
     print("finish collect_files")
+    if args.collect:
+        return
+
     # save cameras.txt
     converter.save_cameras_txt()
     converter.init_globl_points3d()

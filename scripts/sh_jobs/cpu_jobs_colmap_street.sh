@@ -13,4 +13,6 @@ source ~/.bashrc
 micromamba activate city
 cd ..
 # python matrixcity_street_to_colmap_all.py --start_idx=0 --end_idx=5000
-python matrixcity_to_colmap.py --start_idx=0 --end_idx=25000  --city_name=small_city --view_name=street --merge
+python matrixcity_to_colmap.py --start_idx=0 --end_idx=-1  --city_name=big_city --view_name=street --collect
+
+python matrixcity_to_colmap.py --start_idx=0 --end_idx=-1  --city_name=big_city --view_name=aerial --collect

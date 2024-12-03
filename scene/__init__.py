@@ -23,13 +23,17 @@ class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, resolution_scales=[1.0], create_from_hier=False):
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, resolution_scales=[1.0], create_from_hier=False, reload=False):
         """b
         :param path: Path to colmap scene main folder.
         """
         self.model_path = args.model_path
         self.loaded_iter = None
         self.gaussians = gaussians
+        self.reload = reload
+
+        if self.reload:
+            reload_ply_path = os.path.join(args.source_path, "sparse/0/points3D_reload.ply")
 
         if load_iteration:
             if load_iteration == -1:
@@ -73,23 +77,27 @@ class Scene:
             print("Making Test Dataset")
             self.test_cameras[resolution_scale] = CameraDataset(scene_info.test_cameras, args, resolution_scale, True)
 
-        if self.loaded_iter:
-            self.gaussians.load_ply(os.path.join(self.model_path,
-                                                           "point_cloud",
-                                                           "iteration_" + str(self.loaded_iter),
-                                                           "point_cloud.ply"))
-        elif args.pretrained:
-            self.gaussians.create_from_pt(args.pretrained, self.cameras_extent)
-        elif create_from_hier:
-            self.gaussians.create_from_hier(args.hierarchy, self.cameras_extent, args.scaffold_file)
-        else:
-            self.gaussians.create_from_pcd(scene_info.point_cloud, 
-                                           scene_info.train_cameras,
-                                           self.cameras_extent, 
-                                           args.skybox_num,
-                                           args.scaffold_file,
-                                           args.bounds_file,
-                                           args.skybox_locked)
+        if self.reload:
+            self.gaussians.load_ply(reload_ply_path)
+            self.gaussians.init_expousre(scene_info.train_cameras)
+        else:        
+            if self.loaded_iter:
+                self.gaussians.load_ply(os.path.join(self.model_path,
+                                                            "point_cloud",
+                                                            "iteration_" + str(self.loaded_iter),
+                                                            "point_cloud.ply"))
+            elif args.pretrained:
+                self.gaussians.create_from_pt(args.pretrained, self.cameras_extent)
+            elif create_from_hier:
+                self.gaussians.create_from_hier(args.hierarchy, self.cameras_extent, args.scaffold_file)
+            else:
+                self.gaussians.create_from_pcd(scene_info.point_cloud, 
+                                            scene_info.train_cameras,
+                                            self.cameras_extent, 
+                                            args.skybox_num,
+                                            args.scaffold_file,
+                                            args.bounds_file,
+                                            args.skybox_locked)
 
 
     def save(self, iteration):

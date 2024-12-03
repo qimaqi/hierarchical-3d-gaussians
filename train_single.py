@@ -106,6 +106,7 @@ def training(dataset, opt, pipe, saving_iterations, checkpoint_iterations, check
                 Ll1 = l1_loss(image, gt_image)
                 Lssim = (1.0 - ssim(image, gt_image))
                 photo_loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * Lssim 
+                photo_loss_number = photo_loss.item()
                 loss = photo_loss.clone()
                 Ll1depth_pure = 0.0
                 if depth_l1_weight(iteration) > 0 and viewpoint_cam.depth_reliable:
@@ -137,7 +138,7 @@ def training(dataset, opt, pipe, saving_iterations, checkpoint_iterations, check
 
                 with torch.no_grad():
                     # Progress bar
-                    ema_loss_for_log = 0.4 * photo_loss.item() + 0.6 * ema_loss_for_log
+                    ema_loss_for_log = 0.4 * photo_loss_number + 0.6 * ema_loss_for_log
                     ema_Ll1depth_for_log = 0.4 * Ll1depth + 0.6 * ema_Ll1depth_for_log
                     if iteration % 10 == 0:
                         progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "Depth Loss": f"{ema_Ll1depth_for_log:.{7}f}", "Size": f"{gaussians._xyz.size(0)}"})

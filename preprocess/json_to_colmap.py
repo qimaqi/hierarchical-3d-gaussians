@@ -27,8 +27,8 @@ def matrix_to_quaternion_and_translation(matrix):
 
 def arg_parser():
     parser = argparse.ArgumentParser(description='MatrixCity to Colmap')
-    parser.add_argument('--base_dir', type=str, default='/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/colmap_street/camera_calibration/rectified/', help='Input directory')
-    parser.add_argument('--view_name', type=str, default='street', help='City name')
+    parser.add_argument('--base_dir', type=str, default='/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/small_city/colmap_street/camera_calibration/rectified/', help='Input directory')
+    parser.add_argument('--view_name', type=str, default='street', help='view name')
     parser.add_argument('--pc_path', type=str, help='City name')
     args = parser.parse_args()
     return args

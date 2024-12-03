@@ -31,4 +31,4 @@ python preprocess/generate_chunks.py --project_dir /cluster/work/cvl/qimaqi/cvpr
 
 
 # srun --ntasks=8 --mem-per-cpu=4G --gpus=rtx_3090:1  --time=240 --pty bash -i
-# srun --ntasks=8 --mem-per-cpu=8G --time=240 --pty bash -i
+# srun --ntasks=16 --mem-per-cpu=8G --time=240 --pty bash -i

@@ -27,12 +27,12 @@ export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 # python preprocess/generate_chunks.py --project_dir /cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/colmap_street/
 cd /cluster/work/cvl/qimaqi/cvpr_2025_city/hierarchical-3d-gaussians/
 # python preprocess/generate_chunks.py --project_dir /cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/colmap_street/ --min_n_cams 20 --chunk_size 200  --skip_bundle_adjustment
-CHUNK_NAMES=(0_1  0_2  0_3  0_4  0_5  1_1  1_2  1_3  1_4  1_5  1_6)
-# ("0_2")
-# 
-DATASET_DIR=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/colmap_street/
+CHUNK_NAMES=(0_2 0_3 0_4 0_5 1_1 1_2 1_3 1_4 1_5 1_6)
+
+DATASET_DIR=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/small_city/colmap_street/
 # python make_depth_scale_dummy.py --chunks_dir=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/colmap_street/camera_calibration/chunks_mc/
-# python train_coarse.py -s ${DATASET_DIR}/camera_calibration/aligned -i ${DATASET_DIR}/camera_calibration/rectified/images --skybox_num 100000 --position_lr_init 0.0 --position_lr_final 0.0 --model_path ${DATASET_DIR}/output/scaffold --port 6010 
+# python train_coarse_reload.py -s ${DATASET_DIR}/camera_calibration/aligned -i ${DATASET_DIR}/camera_calibration/rectified/images --skybox_num 100000 --position_lr_init 0.0 --position_lr_final 0.0 --model_path ${DATASET_DIR}/output/scaffold --port 6010 
+#--save_iterations 1
 
 # CHUNK_NAME=0_2 
 # python -u train_single.py -s ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --model_path ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME} -i ${DATASET_DIR}/camera_calibration/rectified/images  --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000 --skybox_locked --bounds_file ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME}  --port 6010 -d ${DATASET_DIR}/camera_calibration/rectified/depths --iterations 60000 --densify_until_iter 30000
@@ -44,12 +44,12 @@ DATASET_DIR=/cluster/work/cvl/qimaqi/cvpr_2025/datasets/MatrixCity/colmap_street
 
 
 for CHUNK_NAME in "${CHUNK_NAMES[@]}"; do 
-    python -u train_single.py -s ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --model_path ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME} -i ${DATASET_DIR}/camera_calibration/rectified/images  --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000 --skybox_locked --bounds_file ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME}  --port 6010 -d ${DATASET_DIR}/camera_calibration/rectified/depths --iterations 60000 --densify_until_iter 30000
+    python -u train_single.py -s ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --model_path ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME} -i ${DATASET_DIR}/camera_calibration/rectified/images  --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000 --skybox_locked --bounds_file ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME}  --port 6010 --iterations 60000 --densify_until_iter 30000 #  -d ${DATASET_DIR}/camera_calibration/rectified/depths 
 
     submodules/gaussianhierarchy/build/GaussianHierarchyCreator ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/point_cloud/iteration_30000/point_cloud.ply ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME}  ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/ ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000
 
     # post 
-    python -u train_post.py -s ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --model_path ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME} --hierarchy ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/hierarchy.hier --iterations 15000 --feature_lr 0.0005 --opacity_lr 0.01 --scaling_lr 0.001  -i ${DATASET_DIR}/camera_calibration/rectified/images --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000 --skybox_locked --bounds_file ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --port 6010 -d ${DATASET_DIR}/camera_calibration/rectified/depths    
+    python -u train_post.py -s ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --model_path ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME} --hierarchy ${DATASET_DIR}/output/trained_chunks/${CHUNK_NAME}/hierarchy.hier --iterations 15000 --feature_lr 0.0005 --opacity_lr 0.01 --scaling_lr 0.001  -i ${DATASET_DIR}/camera_calibration/rectified/images --scaffold_file ${DATASET_DIR}/output/scaffold/point_cloud/iteration_30000 --skybox_locked --bounds_file ${DATASET_DIR}/camera_calibration/chunks_mc/${CHUNK_NAME} --port 6010  # -d ${DATASET_DIR}/camera_calibration/rectified/depths    
 done
 
 # let's visualize the results of 0_2

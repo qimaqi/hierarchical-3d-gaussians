@@ -8,3 +8,6 @@ screenshots
 *.diff
 scripts/sh_jobs/joblogs/
 submodules/
+scripts/sh_jobs/euler_jobs/joblogs/*
+sh_jobs/euler_jobs/joblogs/*
+

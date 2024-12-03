@@ -172,6 +172,18 @@ class ImageDepth2Colmap():
         self.output_path = output_path
         self.poses = poses
 
+    # def collect_files_light(self):
+    #     os.makedirs(self.output_path, exist_ok=True)
+    #     os.makedirs(os.path.join(self.output_path, 'images'), exist_ok=True)
+    #     os.makedirs(os.path.join(self.output_path, 'depths_exr'), exist_ok=True)
+    #     os.makedirs(os.path.join(self.output_path, 'depths'), exist_ok=True)
+    #     os.makedirs(os.path.join(self.output_path, 'sparse', 'known'), exist_ok=True)
+    #     os.makedirs(os.path.join(self.output_path, 'sparse', '0'), exist_ok=True)
+    #     new_transforms_path = os.path.join(self.output_path, 'sparse', 'known' , 'transforms.json')
+    #     new_transforms = {}
+    #     new_transforms['train'] = {}
+    #     new_transforms['test'] = {}
+    #     for i, (img_path, depth_path) in tqdm(enumerate(zip(self.image_paths, self.depth_paths)),total=len(self.image_paths) ): 
 
     def collect_files(self, overwrite=False):
         # copy images and depth to output_path/rectified/images and output_path/rectified/depth
@@ -183,15 +195,18 @@ class ImageDepth2Colmap():
         os.makedirs(os.path.join(self.output_path, 'sparse', '0'), exist_ok=True)
 
         # also save a new transform.json
+        copy_map = {}
         new_transforms_path = os.path.join(self.output_path, 'sparse', 'known' , 'transforms.json')
         new_transforms = {}
         new_transforms['train'] = {}
         new_transforms['test'] = {}
+        new_transforms['train_dense'] = {}
 
         for i, (img_path, depth_path) in tqdm(enumerate(zip(self.image_paths, self.depth_paths)),total=len(self.image_paths) ):
             img_target_path = os.path.join(self.output_path, 'images', f"{str(i).zfill(8)}.png")
             depth_target_path = os.path.join(self.output_path, 'depths_exr', f"{str(i).zfill(8)}.exr")
             inv_depth_target_path = os.path.join(self.output_path, 'depths', f"{str(i).zfill(8)}.png")
+   
             if not overwrite:
                 if not os.path.exists(img_target_path):
                     shutil.copy(img_path, img_target_path)

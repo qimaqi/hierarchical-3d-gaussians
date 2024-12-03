@@ -49,6 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_slurm', action="store_true", default=False)
     parser.add_argument('--skip_bundle_adjustment', action="store_true", default=False)
     parser.add_argument('--min_n_cams', default=100, type=int) # 100
+    parser.add_argument('--max_n_cams', default=1500, type=int) # 100
     parser.add_argument('--chunk_size', default=100, type=float)
     parser.add_argument('--n_jobs', type=int, default=8, help="Run per chunk COLMAP in parallel on the same machine. Does not handle multi GPU systems. --use_slurm overrides this.")
     args = parser.parse_args()
@@ -77,6 +78,7 @@ if __name__ == '__main__':
             "--output_path", f"{chunks_dir}/raw_chunks",
             "--chunk_size", f"{args.chunk_size}",
             "--min_n_cams", f"{args.min_n_cams}",
+            "--max_n_cams", f"{args.max_n_cams}",
         ]
     try:
         subprocess.run(make_chunk_args, check=True)

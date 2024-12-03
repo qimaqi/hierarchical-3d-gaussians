@@ -14,6 +14,7 @@ from read_write_model import *
 def arg_parser():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--base_dir', type=str, default='/cluster/work/cvl/qimaqi/cvpr_2025/datasets/small_city_train/small_city/camera_calibration/aligned/sparse/0')
+    parser.add_argument('--split', action='store_true', default=False)
     parser.add_argument('--model_type', type=str, default='bin')
     return parser.parse_args()
 
@@ -48,6 +49,8 @@ def main():
     transform_dict['test'] = []
 
     translation_list = []
+    total_list = []
+    name_list = []
     for image_id, image_meta in images_metas.items():
         # transform_dict[image_id] = image_meta
         # print("image_meta id ", image_meta.id)
@@ -60,9 +63,24 @@ def main():
         poses_w2c = np.concatenate([poses_w2c, np.array([[0, 0, 0, 1]])], axis=0)
         poses_c2w = np.linalg.inv(poses_w2c)
 
-        translation_list.append(poses_c2w[:3, :].tolist())
+        translation_list.append(poses_c2w[:3, -1].tolist())
         data_dict = {image_meta.name: poses_c2w.tolist()}
-        transform_dict[current_model].append(data_dict)
+        if not args.split:
+            transform_dict[current_model].append(data_dict)
+        else:
+            total_list.append(data_dict)
+            name_list.append(image_meta.name)
+
+    if args.split:  
+        reorder_idx = sorted(range(len(name_list)), key=lambda k: name_list[k])
+        reorder_name = [name_list[i] for i in reorder_idx]
+        # print("reorder name",reorder_name)
+        # get 10% test data by get from interval
+        test_idx = reorder_idx[::10]
+        train_idx = [i for i in reorder_idx if i not in test_idx]
+        transform_dict['train'] = [total_list[i] for i in train_idx]
+        transform_dict['test'] = [total_list[i] for i in test_idx]
+
 
         
 
